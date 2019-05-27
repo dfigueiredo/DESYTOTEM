@@ -20,18 +20,12 @@
       <!-- The raw data has been converter with EUDAQ2 to lcio, thus we don't need to convert it here -->
       <!--processor name="UniversalNativeReader"/-->
       <processor name="LoadHotPixelDB"/>
-      <processor name="ClusteringMimosa"/>
-      <processor name="ClusteringAPIX"/>
-      <processor name="ClusteringStrip"/>
-      <processor name="NoisyClusterMaskerM26"/>
-      <processor name="NoisyClusterMaskerAPIX"/>
-      <processor name="NoisyClusterRemoverM26"/>
-      <processor name="NoisyClusterRemoverAPIX"/>
-      <processor name="HitMakerM26"/>
-      <processor name="HitMakerAPIX"/>
-      <processor name="HitMakerStrip"/>
-      <processor name="Correlator"/>
+      <processor name="Clustering"/>
+      <processor name="NoisyClusterMasker"/>
+      <processor name="NoisyClusterRemover"/>
+      <processor name="HitMaker"/>
       <processor name="HitLocalToGlobal"/>
+      <processor name="Correlator"/>
       <processor name="MyEUTelGBL"/>
       <processor name="MyEUTelGBLOutput"/>
       <processor name="EUTelUtilityPrintEventNumber"/>
@@ -54,6 +48,57 @@
   <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-fullreconstruction-histo"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="Clustering" type="EUTelSparseClustering">
+ <!--EUTelSparseClustering is looking for clusters into a calibrated pixel matrix.-->
+  <!--Input of Zero Suppressed data-->
+  <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
+  <!--The list of sensor ids that have to be excluded from the clustering.-->
+  <!--parameter name="ExcludedPlanes" type="IntVec"> </parameter-->
+  <!--Switch on or off the histogram filling-->
+  <parameter name="HistogramFilling" type="bool" value="true"/>
+  <!--Minimum distance squared between sparsified pixel ( touching == 2) [integer]-->
+  <parameter name="SparseMinDistanceSquared" type="int" value="2"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="NoisyClusterMasker" type="EUTelNoisyClusterMasker">
+ <!--EUTelNoisyClusterMasker masks pulses which contain hot pixels. For this, the quality field of pulses is used to encode the kNoisyCluster enum provided by EUTelescope.-->
+  <!--Input of zero suppressed data, still containing hot pixels-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
+  <!--Name of the hot pixel collection.-->
+  <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="NoisyClusterRemover" type="EUTelNoisyClusterRemover">
+ <!--EUTelNoisyClusterRemover removes masked noisy clusters (TrackerPulses) from a collection. It does not read in a hot pixel collection, but removes masked TrackerPulses.-->
+  <!--Input collection containing noise masked tracker pulse objects-->
+  <parameter name="InputCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
+  <!--Output collection where noisy clusters have been removed-->
+  <parameter name="OutputCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26_free </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+</processor>
+
+ <processor name="HitMaker" type="EUTelHitMaker">
+ <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference 
+ to the external frame of reference using the GEAR geometry description-->
+  <!--Input cluster collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26_free </parameter>
+  <!--Output hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> local_hit </parameter>
+  <!--Hit coordinates are calculated in local reference frame of sensor-->
+  <parameter name="EnableLocalCoordidates" type="bool" value="true"/>
+  <!--Switch for histogram plotting (default: true)-->
+  <!--parameter name="PlotHistograms" type="bool" value="true"/-->
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -81,8 +126,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/@FilePrefix@-hotpixel-m26-db.slcio hotpixel_m26 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_apix @DatabasePath@/@FilePrefix@-hotpixel-apix-db.slcio hotpixel_apix </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/run@RunNumber@-hotpixel-m26-db.slcio hotpixel_m26 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
