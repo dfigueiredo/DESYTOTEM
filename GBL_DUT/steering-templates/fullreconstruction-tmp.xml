@@ -126,7 +126,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/run@RunNumber@-hotpixel-m26-db.slcio hotpixel_m26 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/hotpixel-m26-db.slcio hotpixel_m26 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
